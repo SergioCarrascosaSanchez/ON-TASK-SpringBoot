@@ -54,6 +54,10 @@ public class Task {
 		return this.datetime.toString();
 	}
 	
+	public Iterable<User> getUsers(){
+		return this.users;
+	}
+	
 	public void addUser(User user) throws Exception {
 		if(this.users.contains(user)) {
 			throw new Exception("User already assigned to this task");

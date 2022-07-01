@@ -55,7 +55,7 @@ public class User {
 		this.password = password;
 	}
 	
-	public Iterable<Groups> getGroups(){
+	public Iterable<Group> getGroups(){
 		return this.groups;
 	}
 	
