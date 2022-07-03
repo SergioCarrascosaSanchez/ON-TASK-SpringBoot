@@ -9,11 +9,13 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.ManyToMany;
 import javax.persistence.OneToMany;
+import javax.persistence.Table;
 
 import gestordetareasspringboot.task.Task;
 import gestordetareasspringboot.user.User;
 
 @Entity
+@Table(name="groups") 
 public class Group {
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
