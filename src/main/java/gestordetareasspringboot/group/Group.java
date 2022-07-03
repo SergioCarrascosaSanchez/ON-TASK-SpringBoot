@@ -88,6 +88,14 @@ public class Group {
 		return taskSet;
 	}
 	
+	public Iterable<User> getUsers(){
+		return this.users;
+	}
+	
+	public Iterable<Task> getTasks(){
+		return this.tasks;
+	}
+	
 	
 
 }
