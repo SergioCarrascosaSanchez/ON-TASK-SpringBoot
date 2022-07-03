@@ -16,8 +16,6 @@ import gestordetareasspringboot.user.User;
 public class UserDTO {
 	private String username;
 	private String name;
-	private String email;
-	private String password;
 	private List<Long> groups;
 	//private String mapUserTasks;
 	
@@ -26,9 +24,6 @@ public class UserDTO {
 	public UserDTO(User user) {
 		this.username = user.getUsername();
 		this.name = user.getName();
-		this.password = user.getPassword();
-		this.email = user.getEmail();
-		
 		
 		/*Alternativa, aunque requerirá bastantes API calls*/
 		 List<Long> l = new LinkedList<>();
@@ -79,22 +74,6 @@ public class UserDTO {
 
 	public void setName(String name) {
 		this.name = name;
-	}
-
-	public String getPassword() {
-		return password;
-	}
-
-	public void setPassword(String password) {
-		this.password = password;
-	}
-
-	public String getEmail() {
-		return email;
-	}
-
-	public void setEmail(String email) {
-		this.email = email;
 	}
 
 	public List<Long> getGroups() {

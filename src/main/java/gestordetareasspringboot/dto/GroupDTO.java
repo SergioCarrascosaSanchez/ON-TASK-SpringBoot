@@ -4,14 +4,13 @@ import java.util.LinkedList;
 import java.util.List;
 
 import gestordetareasspringboot.group.Group;
-import gestordetareasspringboot.task.Task;
 import gestordetareasspringboot.user.User;
 
 public class GroupDTO {
 	private Long id;
 	private String name;
 	private List<String> users;
-	private List<Long> tasks;
+	private ListOfTasksDTO tasks;
 	
 	public GroupDTO(){}
 	
@@ -23,11 +22,6 @@ public class GroupDTO {
 			usernames.add(u.getUsername());
 		}
 		this.users = usernames;
-		List<Long> tasksId = new LinkedList<>();
-		for(Task t: g.getTasks()) {
-			tasksId.add(t.getId());
-		}
-		this.tasks = tasksId;
 	}
 	
 	public Long getId() {
@@ -48,10 +42,10 @@ public class GroupDTO {
 	public void setUsers(List<String> users) {
 		this.users = users;
 	}
-	public List<Long> getTasks() {
+	public ListOfTasksDTO getTasks() {
 		return tasks;
 	}
-	public void setTasks(List<Long> tasks) {
+	public void setTasks(ListOfTasksDTO tasks) {
 		this.tasks = tasks;
 	}
 }
