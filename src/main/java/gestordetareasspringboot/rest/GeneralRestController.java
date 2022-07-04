@@ -10,17 +10,29 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import gestordetareasspringboot.dto.IdDTO;
 import gestordetareasspringboot.dto.SimpleUserDTO;
+import gestordetareasspringboot.dto.TaskDTO;
+import gestordetareasspringboot.dto.TaskInfoDTO;
 import gestordetareasspringboot.dto.UserDTO;
+import gestordetareasspringboot.group.GroupRepository;
+import gestordetareasspringboot.task.Task;
+import gestordetareasspringboot.task.TaskRepository;
 import gestordetareasspringboot.user.User;
 import gestordetareasspringboot.user.UserRepository;
 
 @RestController
-public class UserRestController {
+public class GeneralRestController {
 	@Autowired
 	private UserRepository userRepo;
+	@Autowired
+	private TaskRepository taskRepo;
+	@Autowired
+	private GroupRepository groupRepo;
+	
 	
 	@PostMapping("/sign-up")
 	public ResponseEntity<Object> signup(@RequestBody SimpleUserDTO userInfo){
@@ -117,5 +129,57 @@ public class UserRestController {
 			}
 		}
 	}
-
+	
+	@PostMapping("/tasks")
+	public ResponseEntity<Object> newTask(@RequestBody TaskInfoDTO task){
+		if(task.getName().isBlank()||task.getDescription().isBlank()) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+		}
+		else {
+			Task newTask = new Task(task.getName(), task.getDescription());
+			this.taskRepo.save(newTask);
+			IdDTO dto = new IdDTO(this.taskRepo.save(newTask).getId());
+			return ResponseEntity.status(HttpStatus.CREATED).body(dto);
+		}
+	}
+	@GetMapping("/tasks/{id}")
+	public ResponseEntity<Object> getTask (@PathVariable Long id, @RequestParam String type){
+		Optional<Task> optionalTask = this.taskRepo.findById(id);
+		if(optionalTask.isPresent()) {
+			Task task = optionalTask.get();
+			if(type.equals("simple")) {
+				TaskInfoDTO dto = new TaskInfoDTO(task);
+				return ResponseEntity.status(HttpStatus.OK).body(dto);
+			}
+			else if(type.equals("complete")) {
+				TaskDTO dto = new TaskDTO(task);
+				return ResponseEntity.status(HttpStatus.OK).body(dto);
+			}
+			else {
+				return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+			}
+		}
+		else {
+			return ResponseEntity.notFound().build();
+		}
+	}
+	@PutMapping("/tasks/{id}")
+	public ResponseEntity<Object> updateTask (@PathVariable Long id, @RequestBody TaskInfoDTO taskInfo){
+		if(taskInfo.getName().isBlank() || taskInfo.getDescription().isBlank()) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+		}
+		else {
+			Optional<Task> optionalTask = this.taskRepo.findById(id);
+			if(optionalTask.isPresent()) {
+				Task task = optionalTask.get();
+				task.setName(taskInfo.getName());
+				task.setDescription(taskInfo.getDescription());
+				this.taskRepo.save(task);
+				return ResponseEntity.status(HttpStatus.OK).build();
+			}
+			else {
+				return ResponseEntity.notFound().build();
+			}
+		}
+	}
 }
