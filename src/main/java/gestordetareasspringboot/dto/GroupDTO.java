@@ -4,24 +4,33 @@ import java.util.LinkedList;
 import java.util.List;
 
 import gestordetareasspringboot.group.Group;
+import gestordetareasspringboot.task.Task;
 import gestordetareasspringboot.user.User;
 
 public class GroupDTO {
 	private Long id;
 	private String name;
-	private List<String> users;
-	private ListOfTasksDTO tasks;
+	private List<SimpleUserDTO> users;
+	private List<TaskInfoDTO> tasks;
 	
 	public GroupDTO(){}
 	
 	public GroupDTO(Group g){
 		this.id = g.getId();
 		this.name = g.getName();
-		List<String> usernames = new LinkedList<>();
+
+		this.users = new LinkedList<SimpleUserDTO>();
 		for(User u: g.getUsers()) {
-			usernames.add(u.getUsername());
+			SimpleUserDTO userInfo = new SimpleUserDTO(u);
+			this.users.add(userInfo);
 		}
-		this.users = usernames;
+		
+		this.tasks = new LinkedList<TaskInfoDTO>();
+		for(Task t: g.getTasks()) {
+			TaskInfoDTO taskInfo = new TaskInfoDTO(t);
+			this.tasks.add(taskInfo);
+		}
+		
 	}
 	
 	public Long getId() {
@@ -36,16 +45,16 @@ public class GroupDTO {
 	public void setName(String name) {
 		this.name = name;
 	}
-	public List<String> getUsers() {
+	public List<SimpleUserDTO> getUsers() {
 		return users;
 	}
-	public void setUsers(List<String> users) {
+	public void setUsers(List<SimpleUserDTO> users) {
 		this.users = users;
 	}
-	public ListOfTasksDTO getTasks() {
+	public List<TaskInfoDTO> getTasks() {
 		return tasks;
 	}
-	public void setTasks(ListOfTasksDTO tasks) {
+	public void setTasks(List<TaskInfoDTO> tasks) {
 		this.tasks = tasks;
 	}
 }
