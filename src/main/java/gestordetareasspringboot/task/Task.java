@@ -8,7 +8,7 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.OneToMany;
+import javax.persistence.ManyToMany;
 
 import gestordetareasspringboot.user.User;
 
@@ -20,7 +20,7 @@ public class Task {
 	private String name;
 	private String description;
 	private String datetime;
-	@OneToMany
+	@ManyToMany
 	private Set<User> users;
 	
 	public Task() {	}
@@ -34,6 +34,10 @@ public class Task {
 	
 	public Long getId() {
 		return this.id;
+	}
+	
+	public boolean noUsers() {
+		return this.users.isEmpty();
 	}
 	
 	public String getName() {
