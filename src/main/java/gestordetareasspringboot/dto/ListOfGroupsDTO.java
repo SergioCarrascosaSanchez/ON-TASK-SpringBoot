@@ -1,29 +1,23 @@
 package gestordetareasspringboot.dto;
 
+import java.util.List;
+
 import gestordetareasspringboot.group.Group;
 import gestordetareasspringboot.user.User;
 
-public class UserGroupDTO {
-	private String username;
-	private Long group;
+public class ListOfGroupsDTO {
+	private List<Long> groups;
 	
-	public UserGroupDTO() {}
+	public ListOfGroupsDTO() {}
 	
-	public UserGroupDTO(User u, Group g) {
-		this.username = u.getUsername();
-		this.group = g.getId();
+	public List<Long> getGroups() {
+		return groups;
+	}
+	public void setGroups(List<Long> list) {
+		this.groups = list;
+	}
+	public void addGroup(Long id) {
+		this.groups.add(id);
 	}
 	
-	public String getUsername() {
-		return username;
-	}
-	public void setUsername(String username) {
-		this.username = username;
-	}
-	public Long getGroup() {
-		return group;
-	}
-	public void setGroup(Long group) {
-		this.group = group;
-	}
 }
