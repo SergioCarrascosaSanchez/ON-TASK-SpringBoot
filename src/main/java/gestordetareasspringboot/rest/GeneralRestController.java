@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.RequestMethod;
 
 import gestordetareasspringboot.dto.GroupDTO;
 import gestordetareasspringboot.dto.GroupListOfTasksDTO;
@@ -34,6 +36,7 @@ import gestordetareasspringboot.user.User;
 import gestordetareasspringboot.user.UserRepository;
 
 @RestController
+@CrossOrigin(origins = "*", methods= {RequestMethod.GET,RequestMethod.DELETE, RequestMethod.PUT,RequestMethod.POST})
 public class GeneralRestController {
 	@Autowired
 	private UserRepository userRepo;
