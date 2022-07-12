@@ -36,7 +36,7 @@ import gestordetareasspringboot.user.User;
 import gestordetareasspringboot.user.UserRepository;
 
 @RestController
-@CrossOrigin(origins = "*", methods= {RequestMethod.GET,RequestMethod.DELETE, RequestMethod.PUT,RequestMethod.POST})
+
 public class GeneralRestController {
 	@Autowired
 	private UserRepository userRepo;
