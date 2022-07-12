@@ -331,7 +331,7 @@ public class GeneralRestController {
 		return null; //me da un error extraño y solo se soluciona poniendo eso
 	}
 	
-	@GetMapping("/tasksOfuser/{username}")
+	@PostMapping("/tasksOfuser/{username}")
 	public ResponseEntity<Object> getTaskOfUser (@PathVariable String username, @RequestBody ListOfGroupsDTO groupList){
 		Optional<User> userOptional = this.userRepo.findByUsername(username);
 		if(userOptional.isPresent()) {
