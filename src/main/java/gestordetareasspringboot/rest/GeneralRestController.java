@@ -349,7 +349,7 @@ public class GeneralRestController {
 						TaskInfoDTO taskDTO = new TaskInfoDTO(t);
 						lista.add(taskDTO);
 					}
-					dto.addEntry(idGroup, lista);
+					dto.addEntry(idGroup, group.getName(), lista);
 					
 				}
 			}
