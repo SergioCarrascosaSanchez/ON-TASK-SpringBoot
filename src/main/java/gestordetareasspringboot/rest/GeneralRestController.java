@@ -27,6 +27,7 @@ import gestordetareasspringboot.dto.SimpleGroupDTO;
 import gestordetareasspringboot.dto.SimpleUserDTO;
 import gestordetareasspringboot.dto.TaskDTO;
 import gestordetareasspringboot.dto.TaskInfoDTO;
+import gestordetareasspringboot.dto.TaskWithUsersAndGroupsDTO;
 import gestordetareasspringboot.dto.UserDTO;
 import gestordetareasspringboot.group.Group;
 import gestordetareasspringboot.group.GroupRepository;
@@ -143,17 +144,47 @@ public class GeneralRestController {
 	}
 	
 	@PostMapping("/tasks")
-	public ResponseEntity<Object> newTask(@RequestBody TaskInfoDTO task){
-		if(task.getName().isBlank()||task.getDescription().isBlank()) {
+	public ResponseEntity<Object> newTask(@RequestBody TaskWithUsersAndGroupsDTO task){
+		if(task.getName().isBlank()||task.getDescription().isBlank() || task.getUsers().isEmpty()) {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
 		}
 		else {
-			Task newTask = new Task(task.getName(), task.getDescription());
-			this.taskRepo.save(newTask);
-			IdDTO dto = new IdDTO(this.taskRepo.save(newTask).getId());
-			return ResponseEntity.status(HttpStatus.CREATED).body(dto);
+			Optional<Group> groupOptional = this.groupRepo.findById(task.getGroup());
+			if(groupOptional.isPresent()) {
+				LinkedList<User> users = new LinkedList<>();
+				for(String user: task.getUsers()) {
+					Optional<User> userOptional = this.userRepo.findByUsername(user);
+					if(userOptional.isPresent()) {
+						users.add(userOptional.get());
+					}
+					else {
+						return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+					}
+				}
+				Task newTask = new Task(task.getName(), task.getDescription());
+				for(User u: users) {
+					try {
+						newTask.addUser(u);
+					} catch (Exception e) {
+						return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+					}
+					
+				}
+				Group group = groupOptional.get();
+				group.addTask(newTask);
+				this.taskRepo.save(newTask);
+				this.groupRepo.save(group);
+				IdDTO dto = new IdDTO(this.taskRepo.save(newTask).getId());
+				return ResponseEntity.status(HttpStatus.CREATED).body(dto);
+			}
+			else {
+				return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Group not found");
+			}
+			
+			
 		}
 	}
+	
 	@GetMapping("/tasks/{id}")
 	public ResponseEntity<Object> getTask (@PathVariable Long id, @RequestParam String type){
 		Optional<Task> optionalTask = this.taskRepo.findById(id);
