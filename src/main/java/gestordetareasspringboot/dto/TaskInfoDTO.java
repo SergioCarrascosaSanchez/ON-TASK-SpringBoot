@@ -3,14 +3,16 @@ package gestordetareasspringboot.dto;
 import gestordetareasspringboot.task.Task;
 
 public class TaskInfoDTO {
+	private Long id;
 	private String name;
-	private String descripcion;
+	private String description;
 	
 	public TaskInfoDTO() {}
 	
 	public TaskInfoDTO(Task task) {
+		this.setId(task.getId());
 		this.name = task.getName();
-		this.descripcion = task.getDescription();
+		this.description = task.getDescription();
 	}
 	
 	public String getName() {
@@ -19,10 +21,18 @@ public class TaskInfoDTO {
 	public void setName(String name) {
 		this.name = name;
 	}
-	public String getDescripcion() {
-		return descripcion;
+	public String getDescription() {
+		return description;
 	}
-	public void setDescripcion(String descripcion) {
-		this.descripcion = descripcion;
+	public void setDescription(String descripcion) {
+		this.description = descripcion;
+	}
+
+	public Long getId() {
+		return id;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
 	}
 }

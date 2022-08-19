@@ -13,4 +13,11 @@ public class ListOfTasksDTO {
 	public void addTask(TaskInfoDTO task) {
 		this.tasks.add(task);
 	}
+	
+	public List<TaskInfoDTO> getTasks(){
+		return this.tasks;
+	}
+	public void setTasks(List<TaskInfoDTO> list) {
+		this.tasks = list;
+	}
 }

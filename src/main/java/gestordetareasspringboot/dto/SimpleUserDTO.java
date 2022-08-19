@@ -1,5 +1,7 @@
 package gestordetareasspringboot.dto;
 
+import gestordetareasspringboot.user.User;
+
 public class SimpleUserDTO {
 	private String username;
 	private String name;
@@ -7,6 +9,13 @@ public class SimpleUserDTO {
 	private String password;
 	
 	public SimpleUserDTO() {}
+	
+	public SimpleUserDTO(User u) {
+		this.username = u.getUsername();
+		this.name = u.getName();
+		this.email = u.getEmail();
+		this.password = u.getPassword();
+	}
 
 	public String getEmail() {
 		return email;

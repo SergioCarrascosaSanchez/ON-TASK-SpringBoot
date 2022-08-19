@@ -3,6 +3,8 @@ package gestordetareasspringboot.dto;
 import java.util.LinkedList;
 import java.util.List;
 
+import javax.persistence.Column;
+
 import gestordetareasspringboot.task.Task;
 import gestordetareasspringboot.user.User;
 
@@ -11,7 +13,7 @@ public class TaskDTO {
 	private String name;
 	private String description;
 	private String datetime;
-	private List<String> users;
+	private List<SimpleUserDTO> users;
 	
 	public TaskDTO() {}
 	
@@ -20,11 +22,11 @@ public class TaskDTO {
 		this.id = task.getId();
 		this.description = task.getDescription();
 		this.datetime = task.getDateTime();
-		List<String> usernames = new LinkedList<>();
+		this.users = new LinkedList<SimpleUserDTO>();
 		for(User u: task.getUsers()) {
-			usernames.add(u.getUsername());
+			SimpleUserDTO userInfo = new SimpleUserDTO(u);
+			this.users.add(userInfo);
 		}
-		this.users = usernames;
 	}
 	
 	public String getName() {
@@ -42,10 +44,10 @@ public class TaskDTO {
 	public String getDatetime() {
 		return datetime;
 	}
-	public List<String> getUsers() {
+	public List<SimpleUserDTO> getUsers() {
 		return users;
 	}
-	public void setUsers(List<String> users) {
+	public void setUsers(List<SimpleUserDTO> users) {
 		this.users = users;
 	}
 }
