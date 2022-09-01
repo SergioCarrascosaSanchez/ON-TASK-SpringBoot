@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -13,10 +14,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.RequestMethod;
 
 import gestordetareasspringboot.dto.GroupDTO;
 import gestordetareasspringboot.dto.GroupListOfTasksDTO;
@@ -102,48 +102,58 @@ public class GeneralRestController {
 	}
 	
 	@GetMapping("/users/{username}")
-	public ResponseEntity<Object> getUser (@PathVariable String username){
-		if(username.isBlank()) {
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-		}
-		else {
-			Optional<User> usernameOptional = this.userRepo.findByUsername(username);
-			if(!usernameOptional.isPresent()) {
-				return ResponseEntity.notFound().build();
+	public ResponseEntity<Object> getUser (@RequestHeader(HttpHeaders.AUTHORIZATION) String authHeader ,@PathVariable String username){
+		if(validHeaderToken(authHeader, username, false)) {
+			if(username.isBlank()) {
+				return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
 			}
 			else {
-				UserDTO dto = new UserDTO(usernameOptional.get());
-				return ResponseEntity.status(HttpStatus.OK).body(dto);
+				Optional<User> usernameOptional = this.userRepo.findByUsername(username);
+				if(!usernameOptional.isPresent()) {
+					return ResponseEntity.notFound().build();
+				}
+				else {
+						UserDTO dto = new UserDTO(usernameOptional.get());
+						return ResponseEntity.status(HttpStatus.OK).body(dto);
+					}
+					
 			}
+		}
+		else {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 		}
 	}
 	
 	@PutMapping("/users/{username}")
-	public ResponseEntity<Object> updateUser (@PathVariable String username, @RequestBody SimpleUserDTO userInfo){
-		if(username.isBlank() || userInfo.getName().isBlank() || userInfo.getPassword().isBlank() || userInfo.getEmail().isBlank() || !userInfo.getUsername().isBlank()) {
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-		}
-		else {
-			Optional<User> usernameOptional = this.userRepo.findByUsername(username);
-			if(!usernameOptional.isPresent()) {
-				return ResponseEntity.notFound().build();
+	public ResponseEntity<Object> updateUser (@RequestHeader(HttpHeaders.AUTHORIZATION) String authHeader, @PathVariable String username, @RequestBody SimpleUserDTO userInfo){
+		if(validHeaderToken(authHeader, username, true)) {
+			if(username.isBlank() || userInfo.getName().isBlank() || userInfo.getPassword().isBlank() || userInfo.getEmail().isBlank() || !userInfo.getUsername().isBlank()) {
+				return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
 			}
 			else {
-				User user = usernameOptional.get();
-				if(!user.getEmail().equals(userInfo.getEmail())) {
-					Optional<User> emailUserInfoOptional = this.userRepo.findByEmail(userInfo.getEmail());
-					if(emailUserInfoOptional.isPresent()) {
-						return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Email already in use");
-					}
-					else {
-						user.setEmail(userInfo.getEmail());
-					}
+				Optional<User> usernameOptional = this.userRepo.findByUsername(username);
+				if(!usernameOptional.isPresent()) {
+					return ResponseEntity.notFound().build();
 				}
-				user.setName(userInfo.getName());
-				user.setPassword(userInfo.getPassword());
-				this.userRepo.save(user);
-				return ResponseEntity.status(HttpStatus.OK).build();
+				else {
+					User user = usernameOptional.get();
+					if(!user.getEmail().equals(userInfo.getEmail())) {
+						Optional<User> emailUserInfoOptional = this.userRepo.findByEmail(userInfo.getEmail());
+						if(emailUserInfoOptional.isPresent()) {
+							return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Email already in use");
+						}
+						else {
+							user.setEmail(userInfo.getEmail());
+						}
+					}
+					user.setName(userInfo.getName());
+					user.setPassword(userInfo.getPassword());
+					this.userRepo.save(user);
+					return ResponseEntity.status(HttpStatus.OK).build();
+				}
 			}
+		}else {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 		}
 	}
 	
@@ -434,11 +444,11 @@ public class GeneralRestController {
 		}
 	}
 	
-	private boolean validHeaderToken(String authHeader, String username) {
+	private boolean validHeaderToken(String authHeader, String username, boolean usernameNeeded) {
 		if(jwtService.isBearer(authHeader)) {
 			String token = jwtService.getToken(authHeader);
 			
-			if(jwtService.verify(token, "Sergio")) {
+			if(jwtService.verify(token, username, usernameNeeded)) {
 				return true;
 			}
 			else {
