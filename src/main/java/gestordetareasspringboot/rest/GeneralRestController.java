@@ -363,15 +363,20 @@ public class GeneralRestController {
 	}
 	
 	@GetMapping("/groups/{idGroup}")
-	public ResponseEntity<Object> getGroup(@PathVariable Long idGroup){
-		Optional<Group> groupOptional = this.groupRepo.findById(idGroup);
-		if(groupOptional.isPresent()) {
-			Group group = groupOptional.get();
-			GroupDTO dto = new GroupDTO(group);
-			return ResponseEntity.status(HttpStatus.OK).body(dto);
+	public ResponseEntity<Object> getGroup(@RequestHeader(HttpHeaders.AUTHORIZATION) String authHeader,@PathVariable Long idGroup){
+		if(validHeaderToken(authHeader, "", false)) {
+			Optional<Group> groupOptional = this.groupRepo.findById(idGroup);
+			if(groupOptional.isPresent()) {
+				Group group = groupOptional.get();
+				GroupDTO dto = new GroupDTO(group);
+				return ResponseEntity.status(HttpStatus.OK).body(dto);
+			}
+			else {
+				return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+			}
 		}
 		else {
-			return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 		}
 	}
 	
