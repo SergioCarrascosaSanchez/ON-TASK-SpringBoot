@@ -43,19 +43,24 @@ public class JwtService {
 		return authHeader.substring(7);
 	}
 	
-	public boolean verify(String token, String username) {
+	public boolean verify(String token, String username, boolean usernameNeeded) {
 		try{
 			Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
 		}
 		catch(JwtException e){
 			return false;
 		}
-		String subject = Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody().getSubject();
-		if(subject.equals(username)) {
-			return true;
+		if(usernameNeeded) {
+			String subject = Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody().getSubject();
+			if(subject.equals(username)) {
+				return true;
+			}
+			else {
+				return false;
+			}
 		}
 		else {
-			return false;
+			return true;
 		}
 	}
 }
