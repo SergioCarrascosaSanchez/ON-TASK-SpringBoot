@@ -28,9 +28,11 @@ import gestordetareasspringboot.dto.SimpleUserDTO;
 import gestordetareasspringboot.dto.TaskDTO;
 import gestordetareasspringboot.dto.TaskInfoDTO;
 import gestordetareasspringboot.dto.TaskWithUsersAndGroupsDTO;
+import gestordetareasspringboot.dto.TokenResponseDTO;
 import gestordetareasspringboot.dto.UserDTO;
 import gestordetareasspringboot.group.Group;
 import gestordetareasspringboot.group.GroupRepository;
+import gestordetareasspringboot.jwt.JwtService;
 import gestordetareasspringboot.task.Task;
 import gestordetareasspringboot.task.TaskRepository;
 import gestordetareasspringboot.user.User;
@@ -45,6 +47,8 @@ public class GeneralRestController {
 	private TaskRepository taskRepo;
 	@Autowired
 	private GroupRepository groupRepo;
+	@Autowired
+	private JwtService jwtService;
 	
 	
 	@PostMapping("/sign-up")
@@ -90,7 +94,7 @@ public class GeneralRestController {
 					return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Username or password are incorrect");
 				}
 				else {
-					return ResponseEntity.status(HttpStatus.OK).build();
+					return ResponseEntity.status(HttpStatus.OK).body(new TokenResponseDTO(this.jwtService.createToken(user.getUsername())));
 				}
 			}
 			
