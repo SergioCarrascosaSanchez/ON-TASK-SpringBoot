@@ -32,7 +32,7 @@ public class JwtService {
 	}
 	
 	public String getSubject(String token) {
-		return Jwts.parserBuilder().build().parseClaimsJws(token).getBody().getSubject();
+		return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody().getSubject();
 	}
 	
 	public boolean isBearer(String authHeader) {
