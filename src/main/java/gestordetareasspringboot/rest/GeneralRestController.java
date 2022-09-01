@@ -167,13 +167,7 @@ public class GeneralRestController {
 				Optional<Group> groupOptional = this.groupRepo.findById(task.getGroup());
 				if(groupOptional.isPresent()) {
 					Group group = groupOptional.get();
-					boolean tokenUsernameInGroup = false;
-					for(User groupUser: group.getUsers()) {
-						if(groupUser.getUsername().equals(this.jwtService.getSubject(this.jwtService.getToken(authHeader)))) {
-							tokenUsernameInGroup = true;
-						}
-					}
-					if(tokenUsernameInGroup) {
+					if(isInGroup(group, this.jwtService.getSubject(this.jwtService.getToken(authHeader)))){
 						LinkedList<User> users = new LinkedList<>();
 						for(String user: task.getUsers()) {
 							Optional<User> userOptional = this.userRepo.findByUsername(user);
@@ -282,13 +276,7 @@ public class GeneralRestController {
 			Optional<Group> groupOptional = this.groupRepo.findById(idGroup);
 			if(groupOptional.isPresent()) {
 				Group group = groupOptional.get();
-				boolean tokenUsernameInGroup = false;
-				for(User groupUser: group.getUsers()) {
-					if(groupUser.getUsername().equals(this.jwtService.getSubject(this.jwtService.getToken(authHeader)))) {
-						tokenUsernameInGroup = true;
-					}
-				}
-				if(tokenUsernameInGroup) {
+				if(isInGroup(group, this.jwtService.getSubject(this.jwtService.getToken(authHeader)))){
 					Optional<Task> taskOptional = this.taskRepo.findById(idTask);
 					if(taskOptional.isPresent()) {
 						
@@ -344,21 +332,33 @@ public class GeneralRestController {
 		}
 	}
 	
+	
 	@PutMapping("/groups/{idGroup}")
-	public ResponseEntity<Object> updateGroup(@PathVariable Long idGroup, @RequestBody SimpleGroupDTO groupName){
-		if(groupName.getName().isBlank()) {
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-		}
-		else {
-			Optional<Group> groupOptional = this.groupRepo.findById(idGroup);
-			if(groupOptional.isPresent()) {
-				Group g = groupOptional.get();
-				g.setName(groupName.getName());
-				return ResponseEntity.status(HttpStatus.OK).build();
+	public ResponseEntity<Object> updateGroup(@RequestHeader(HttpHeaders.AUTHORIZATION) String authHeader, @PathVariable Long idGroup, @RequestBody SimpleGroupDTO groupName){
+		if(validHeaderToken(authHeader, "", false)) {
+			if(groupName.getName().isBlank()) {
+				return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
 			}
 			else {
-				return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+				Optional<Group> groupOptional = this.groupRepo.findById(idGroup);
+				if(groupOptional.isPresent()) {
+					Group g = groupOptional.get();
+					if(isInGroup(g, this.jwtService.getSubject(this.jwtService.getToken(authHeader)))){
+						g.setName(groupName.getName());
+						this.groupRepo.save(g);
+						return ResponseEntity.status(HttpStatus.OK).build();
+					}
+					else {
+						return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+					}	
+				}
+				else {
+					return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+				}
 			}
+		}
+		else {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 		}
 	}
 	
@@ -516,6 +516,15 @@ public class GeneralRestController {
 		else {
 			return false;
 		}
+	}
+	
+	private boolean isInGroup(Group group, String username) {
+		for(User groupUser: group.getUsers()) {
+			if(groupUser.getUsername().equals(username)) {
+				return true;
+			}
+		}
+		return false;
 	}
 }
 
