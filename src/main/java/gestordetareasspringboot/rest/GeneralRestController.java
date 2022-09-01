@@ -433,6 +433,22 @@ public class GeneralRestController {
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
 		}
 	}
+	
+	private boolean validHeaderToken(String authHeader, String username) {
+		if(jwtService.isBearer(authHeader)) {
+			String token = jwtService.getToken(authHeader);
+			
+			if(jwtService.verify(token, "Sergio")) {
+				return true;
+			}
+			else {
+				return false;
+			}	
+		}
+		else {
+			return false;
+		}
+	}
 }
 
 
