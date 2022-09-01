@@ -215,43 +215,64 @@ public class GeneralRestController {
 	}
 	
 	@GetMapping("/tasks/{id}")
-	public ResponseEntity<Object> getTask (@PathVariable Long id, @RequestParam String type){
-		Optional<Task> optionalTask = this.taskRepo.findById(id);
-		if(optionalTask.isPresent()) {
-			Task task = optionalTask.get();
-			if(type.equals("simple")) {
-				TaskInfoDTO dto = new TaskInfoDTO(task);
-				return ResponseEntity.status(HttpStatus.OK).body(dto);
-			}
-			else if(type.equals("complete")) {
-				TaskDTO dto = new TaskDTO(task);
-				return ResponseEntity.status(HttpStatus.OK).body(dto);
-			}
-			else {
-				return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-			}
-		}
-		else {
-			return ResponseEntity.notFound().build();
-		}
-	}
-	@PutMapping("/tasks/{id}")
-	public ResponseEntity<Object> updateTask (@PathVariable Long id, @RequestBody TaskInfoDTO taskInfo){
-		if(taskInfo.getName().isBlank() || taskInfo.getDescription().isBlank()) {
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-		}
-		else {
+	public ResponseEntity<Object> getTask (@RequestHeader(HttpHeaders.AUTHORIZATION) String authHeader, @PathVariable Long id, @RequestParam String type){
+		if(validHeaderToken(authHeader, "", false)) {
 			Optional<Task> optionalTask = this.taskRepo.findById(id);
 			if(optionalTask.isPresent()) {
 				Task task = optionalTask.get();
-				task.setName(taskInfo.getName());
-				task.setDescription(taskInfo.getDescription());
-				this.taskRepo.save(task);
-				return ResponseEntity.status(HttpStatus.OK).build();
+				if(type.equals("simple")) {
+					TaskInfoDTO dto = new TaskInfoDTO(task);
+					return ResponseEntity.status(HttpStatus.OK).body(dto);
+				}
+				else if(type.equals("complete")) {
+					TaskDTO dto = new TaskDTO(task);
+					return ResponseEntity.status(HttpStatus.OK).body(dto);
+				}
+				else {
+					return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+				}
 			}
 			else {
 				return ResponseEntity.notFound().build();
 			}
+		}
+		else {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+		}
+	}
+	@PutMapping("/tasks/{id}")
+	public ResponseEntity<Object> updateTask (@RequestHeader(HttpHeaders.AUTHORIZATION) String authHeader, @PathVariable Long id, @RequestBody TaskInfoDTO taskInfo){
+		if(validHeaderToken(authHeader, "", false)) {
+			if(taskInfo.getName().isBlank() || taskInfo.getDescription().isBlank()) {
+				return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+			}
+			else {
+				Optional<Task> optionalTask = this.taskRepo.findById(id);
+				if(optionalTask.isPresent()) {
+					Task task = optionalTask.get();
+					boolean tokenUsernameInTask = false;
+					for(User taskUser: task.getUsers()) {
+						if(taskUser.getUsername().equals(this.jwtService.getSubject(this.jwtService.getToken(authHeader)))) {
+							tokenUsernameInTask = true;
+						}
+					}
+					if(tokenUsernameInTask) {
+						task.setName(taskInfo.getName());
+						task.setDescription(taskInfo.getDescription());
+						this.taskRepo.save(task);
+						return ResponseEntity.status(HttpStatus.OK).build();
+					}
+					else {
+						return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+					}
+				}
+				else {
+					return ResponseEntity.notFound().build();
+				}
+			}	
+		}
+		else {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 		}
 	}
 	
