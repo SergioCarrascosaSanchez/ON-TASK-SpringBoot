@@ -322,20 +322,25 @@ public class GeneralRestController {
 	}
 	
 	@PostMapping("/groups")
-	public ResponseEntity<Object> newGroup(@RequestBody SimpleGroupDTO groupName){
-		if(groupName.getName().isBlank()) {
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-		}
-		else {
-			Optional<Group> nameOptional = this.groupRepo.findByName(groupName.getName());
-			if(nameOptional.isPresent()) {
+	public ResponseEntity<Object> newGroup(@RequestHeader(HttpHeaders.AUTHORIZATION) String authHeader, @RequestBody SimpleGroupDTO groupName){
+		if(validHeaderToken(authHeader, "", false)) {
+			if(groupName.getName().isBlank()) {
 				return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
 			}
 			else {
-				Group group = new Group(groupName.getName());
-				IdDTO dto = new IdDTO(this.groupRepo.save(group).getId());
-				return ResponseEntity.status(HttpStatus.CREATED).body(dto);
+				Optional<Group> nameOptional = this.groupRepo.findByName(groupName.getName());
+				if(nameOptional.isPresent()) {
+					return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+				}
+				else {
+					Group group = new Group(groupName.getName());
+					IdDTO dto = new IdDTO(this.groupRepo.save(group).getId());
+					return ResponseEntity.status(HttpStatus.CREATED).body(dto);
+				}
 			}
+		}
+		else {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 		}
 	}
 	
