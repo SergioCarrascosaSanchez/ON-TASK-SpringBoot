@@ -277,27 +277,44 @@ public class GeneralRestController {
 	}
 	
 	@DeleteMapping("/tasks/{idTask}/groups/{idGroup}")
-	public ResponseEntity<Object> deleteTask (@PathVariable Long idTask, @PathVariable Long idGroup){
-		Optional<Group> groupOptional = this.groupRepo.findById(idGroup);
-		if(groupOptional.isPresent()) {
-			Optional<Task> taskOptional = this.taskRepo.findById(idTask);
-			if(taskOptional.isPresent()) {
+	public ResponseEntity<Object> deleteTask (@RequestHeader(HttpHeaders.AUTHORIZATION) String authHeader, @PathVariable Long idTask, @PathVariable Long idGroup){
+		if(validHeaderToken(authHeader, "", false)) {
+			Optional<Group> groupOptional = this.groupRepo.findById(idGroup);
+			if(groupOptional.isPresent()) {
 				Group group = groupOptional.get();
-				try {
-					group.deleteTask(taskOptional.get());
-				} catch (Exception e) {
-					return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+				boolean tokenUsernameInGroup = false;
+				for(User groupUser: group.getUsers()) {
+					if(groupUser.getUsername().equals(this.jwtService.getSubject(this.jwtService.getToken(authHeader)))) {
+						tokenUsernameInGroup = true;
+					}
 				}
-				this.taskRepo.deleteById(idTask);
-				this.groupRepo.save(group);
-				return ResponseEntity.status(HttpStatus.OK).build();
+				if(tokenUsernameInGroup) {
+					Optional<Task> taskOptional = this.taskRepo.findById(idTask);
+					if(taskOptional.isPresent()) {
+						
+						try {
+							group.deleteTask(taskOptional.get());
+						} catch (Exception e) {
+							return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+						}
+						this.taskRepo.deleteById(idTask);
+						this.groupRepo.save(group);
+						return ResponseEntity.status(HttpStatus.OK).build();
+					}
+					else {
+						return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Task not found");
+					}
+				}
+				else {
+					return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+				}
 			}
 			else {
-				return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Task not found");
+				return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Group not found");
 			}
 		}
 		else {
-			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Group not found");
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 		}
 		
 		
