@@ -381,7 +381,6 @@ public class GeneralRestController {
 		}
 	}
 	
-	//VOY POR AQUI
 	
 	@PutMapping("/users/{username}/groups/{idGroup}/tasks/{idTask}")
 	public ResponseEntity<Object> addTaskToUser (@RequestHeader(HttpHeaders.AUTHORIZATION) String authHeader,@PathVariable String username, @PathVariable Long idGroup, @PathVariable Long idTask){
@@ -428,95 +427,112 @@ public class GeneralRestController {
 	}
 	
 	@GetMapping("/users/{username}/groups/{idGroup}")
-	public ResponseEntity<Object> getTaskOfUserOfGroup (@PathVariable String username, @PathVariable Long idGroup){
-		Optional<User> userOptional = this.userRepo.findByUsername(username);
-		if(userOptional.isPresent()) {
-			Optional<Group> groupOptional = this.groupRepo.findById(idGroup);
-			if(!groupOptional.isPresent()) {
-				ResponseEntity.status(HttpStatus.NOT_FOUND).body("Group not found");
+	public ResponseEntity<Object> getTaskOfUserOfGroup (@RequestHeader(HttpHeaders.AUTHORIZATION) String authHeader,@PathVariable String username, @PathVariable Long idGroup){
+		if(validHeaderToken(authHeader, "", false)) {
+			Optional<User> userOptional = this.userRepo.findByUsername(username);
+			if(userOptional.isPresent()) {
+				Optional<Group> groupOptional = this.groupRepo.findById(idGroup);
+				if(!groupOptional.isPresent()) {
+					return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Group not found");
+				}
+				else {
+					User user = userOptional.get();
+					Group group = groupOptional.get();
+					ListOfTasksDTO dto = new ListOfTasksDTO();
+					for(Task t: group.getUserTasks(user)) {
+						TaskInfoDTO taskDTO = new TaskInfoDTO(t);
+						dto.addTask(taskDTO);
+					}
+					return ResponseEntity.status(HttpStatus.OK).body(dto);
+				}
 			}
 			else {
-				User user = userOptional.get();
-				Group group = groupOptional.get();
-				ListOfTasksDTO dto = new ListOfTasksDTO();
-				for(Task t: group.getUserTasks(user)) {
-					TaskInfoDTO taskDTO = new TaskInfoDTO(t);
-					dto.addTask(taskDTO);
-				}
-				return ResponseEntity.status(HttpStatus.OK).body(dto);
+				return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
 			}
 		}
 		else {
-			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 		}
-		return null; //me da un error extraño y solo se soluciona poniendo eso
 	}
 	
 	@PostMapping("/tasksOfuser/{username}")
-	public ResponseEntity<Object> getTaskOfUser (@PathVariable String username, @RequestBody ListOfGroupsDTO groupList){
-		Optional<User> userOptional = this.userRepo.findByUsername(username);
-		if(userOptional.isPresent()) {
-			User user = userOptional.get();
-			GroupListOfTasksDTO dto = new GroupListOfTasksDTO();
-			for(Long idGroup: groupList.getGroups()) {
-				Optional<Group> groupOptional = this.groupRepo.findById(idGroup);
-				if(!groupOptional.isPresent()) {
-					ResponseEntity.status(HttpStatus.NOT_FOUND).body("Group not found");
-				}
-				else {
-					Group group = groupOptional.get();
-					List<TaskInfoDTO> lista= new LinkedList<TaskInfoDTO>();
-					for(Task t: group.getUserTasks(user)) {
-						TaskInfoDTO taskDTO = new TaskInfoDTO(t);
-						lista.add(taskDTO);
+	public ResponseEntity<Object> getTaskOfUser (@RequestHeader(HttpHeaders.AUTHORIZATION) String authHeader, @PathVariable String username, @RequestBody ListOfGroupsDTO groupList){
+		if(validHeaderToken(authHeader, "", false)) {
+			Optional<User> userOptional = this.userRepo.findByUsername(username);
+			if(userOptional.isPresent()) {
+				User user = userOptional.get();
+				GroupListOfTasksDTO dto = new GroupListOfTasksDTO();
+				for(Long idGroup: groupList.getGroups()) {
+					Optional<Group> groupOptional = this.groupRepo.findById(idGroup);
+					if(!groupOptional.isPresent()) {
+						ResponseEntity.status(HttpStatus.NOT_FOUND).body("Group not found");
 					}
-					dto.addEntry(idGroup, group.getName(), lista);
-					
+					else {
+						Group group = groupOptional.get();
+						List<TaskInfoDTO> lista= new LinkedList<TaskInfoDTO>();
+						for(Task t: group.getUserTasks(user)) {
+							TaskInfoDTO taskDTO = new TaskInfoDTO(t);
+							lista.add(taskDTO);
+						}
+						dto.addEntry(idGroup, group.getName(), lista);
+						
+					}
 				}
+				return ResponseEntity.status(HttpStatus.OK).body(dto);
 			}
-			return ResponseEntity.status(HttpStatus.OK).body(dto);
+			else {
+				return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+			}
 		}
 		else {
-			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 		}
 	}
 	
 	@PutMapping("/users/{username}/groups/{idGroup}")
-	public ResponseEntity<Object> addUserToGroup (@PathVariable String username, @PathVariable Long idGroup, @RequestParam String type){
-		Optional<User> userOptional = this.userRepo.findByUsername(username);
-		if(userOptional.isPresent()) {
-			Optional<Group> groupOptional = this.groupRepo.findById(idGroup);
-			if(groupOptional.isPresent()) {
-				Group group = groupOptional.get();
-				User user = userOptional.get();
-				if(type.equals("delete")) {
-					try {
-						group.deleteUser(user);
-					} catch (Exception e) {
-						return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+	public ResponseEntity<Object> addUserToGroup (@RequestHeader(HttpHeaders.AUTHORIZATION) String authHeader,  @PathVariable String username, @PathVariable Long idGroup, @RequestParam String type){
+		if(validHeaderToken(authHeader, "", false)) {
+			Optional<User> userOptional = this.userRepo.findByUsername(username);
+			if(userOptional.isPresent()) {
+				Optional<Group> groupOptional = this.groupRepo.findById(idGroup);
+				if(groupOptional.isPresent()) {
+					Group group = groupOptional.get();
+					if(this.jwtService.getSubject(this.jwtService.getToken(authHeader)).equals(username)){
+						User user = userOptional.get();
+						if(type.equals("delete")) {
+							try {
+								group.deleteUser(user);
+							} catch (Exception e) {
+								return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+							}
+							this.groupRepo.save(group);
+							this.userRepo.save(user);
+							return ResponseEntity.status(HttpStatus.OK).build();
+						}
+						else {
+							try {
+								group.addUser(user);
+							} catch (Exception e) {
+								return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+							}
+							this.groupRepo.save(group);
+							return ResponseEntity.status(HttpStatus.OK).build();
+						}
 					}
-					this.groupRepo.save(group);
-					this.userRepo.save(user);
-					return ResponseEntity.status(HttpStatus.OK).build();
+					else {
+						return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+					}
 				}
 				else {
-					try {
-						group.addUser(user);
-					} catch (Exception e) {
-						return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-					}
-					this.groupRepo.save(group);
-					return ResponseEntity.status(HttpStatus.OK).build();
+					return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Group not found");
 				}
-				
-				
 			}
 			else {
-				return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Group not found");
+				return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
 			}
 		}
 		else {
-			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 		}
 	}
 	
