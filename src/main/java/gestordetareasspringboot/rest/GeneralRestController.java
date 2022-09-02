@@ -362,6 +362,7 @@ public class GeneralRestController {
 		}
 	}
 	
+	
 	@GetMapping("/groups/{idGroup}")
 	public ResponseEntity<Object> getGroup(@RequestHeader(HttpHeaders.AUTHORIZATION) String authHeader,@PathVariable Long idGroup){
 		if(validHeaderToken(authHeader, "", false)) {
@@ -380,37 +381,49 @@ public class GeneralRestController {
 		}
 	}
 	
+	//VOY POR AQUI
+	
 	@PutMapping("/users/{username}/groups/{idGroup}/tasks/{idTask}")
-	public ResponseEntity<Object> addTaskToUser (@PathVariable String username, @PathVariable Long idGroup, @PathVariable Long idTask){
-		Optional<Group> groupOptional = this.groupRepo.findById(idGroup);
-		if(groupOptional.isPresent()) {
-			Optional<Task> taskOptional = this.taskRepo.findById(idTask);
-			if(taskOptional.isPresent()) {
-				Optional<User> userOptional = this.userRepo.findByUsername(username);
-				if(userOptional.isPresent()) {
-					Group group = groupOptional.get();
-					Task task = taskOptional.get();
-					User user = userOptional.get();
-					try {
-						task.addUser(user);
-					} catch (Exception e) {
-						return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+	public ResponseEntity<Object> addTaskToUser (@RequestHeader(HttpHeaders.AUTHORIZATION) String authHeader,@PathVariable String username, @PathVariable Long idGroup, @PathVariable Long idTask){
+		if(validHeaderToken(authHeader, "", false)) {
+			Optional<Group> groupOptional = this.groupRepo.findById(idGroup);
+			if(groupOptional.isPresent()) {
+				Group group = groupOptional.get();
+				if(isInGroup(group, this.jwtService.getSubject(this.jwtService.getToken(authHeader)))){
+					Optional<Task> taskOptional = this.taskRepo.findById(idTask);
+					if(taskOptional.isPresent()) {
+						Optional<User> userOptional = this.userRepo.findByUsername(username);
+						if(userOptional.isPresent()) {
+							Task task = taskOptional.get();
+							User user = userOptional.get();
+							try {
+								task.addUser(user);
+							} catch (Exception e) {
+								return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+							}
+							group.addTask(task);
+							this.taskRepo.save(task);
+							this.groupRepo.save(group);
+							return ResponseEntity.status(HttpStatus.OK).build();
+						}
+						else {
+							return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+						}
 					}
-					group.addTask(task);
-					this.taskRepo.save(task);
-					this.groupRepo.save(group);
-					return ResponseEntity.status(HttpStatus.OK).build();
+					else {
+						return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Task not found");
+					}
 				}
 				else {
-					return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+					return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 				}
 			}
 			else {
-				return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Task not found");
+				return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Group not found");
 			}
 		}
 		else {
-			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Group not found");
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 		}
 	}
 	
