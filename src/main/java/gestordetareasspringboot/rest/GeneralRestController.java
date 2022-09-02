@@ -389,28 +389,33 @@ public class GeneralRestController {
 			if(groupOptional.isPresent()) {
 				Group group = groupOptional.get();
 				if(isInGroup(group, this.jwtService.getSubject(this.jwtService.getToken(authHeader)))){
-					Optional<Task> taskOptional = this.taskRepo.findById(idTask);
-					if(taskOptional.isPresent()) {
-						Optional<User> userOptional = this.userRepo.findByUsername(username);
-						if(userOptional.isPresent()) {
-							Task task = taskOptional.get();
-							User user = userOptional.get();
-							try {
-								task.addUser(user);
-							} catch (Exception e) {
-								return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+					if(isInGroup(group,username)){
+						Optional<Task> taskOptional = this.taskRepo.findById(idTask);
+						if(taskOptional.isPresent()) {
+							Optional<User> userOptional = this.userRepo.findByUsername(username);
+							if(userOptional.isPresent()) {
+								Task task = taskOptional.get();
+								User user = userOptional.get();
+								try {
+									task.addUser(user);
+								} catch (Exception e) {
+									return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+								}
+								group.addTask(task);
+								this.taskRepo.save(task);
+								this.groupRepo.save(group);
+								return ResponseEntity.status(HttpStatus.OK).build();
 							}
-							group.addTask(task);
-							this.taskRepo.save(task);
-							this.groupRepo.save(group);
-							return ResponseEntity.status(HttpStatus.OK).build();
+							else {
+								return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+							}
 						}
 						else {
-							return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+							return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Task not found");
 						}
 					}
 					else {
-						return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Task not found");
+						return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("User not assigned to this group");
 					}
 				}
 				else {
