@@ -10,8 +10,8 @@
 	</parent>
 	<groupId>gestor-de-tareas-springboot</groupId>
 	<artifactId>gestor-de-tareas-springboot</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
-	<name>gestor-de-tareas-springboot</name>
+	<version>0.0.1</version>
+	<name>ON-TASK-springboot</name>
 	<description>API</description>
 	<properties>
 		<java.version>18</java.version>
